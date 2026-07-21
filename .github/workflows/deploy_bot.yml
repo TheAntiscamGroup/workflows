@@ -31,6 +31,7 @@ jobs:
           environment: production
           onlyRemoveDeployments: true
   deploy:
+    name: Deploy Bot
     environment: production
     runs-on: ubuntu-latest
     steps:

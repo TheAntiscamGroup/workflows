@@ -16,11 +16,8 @@ on:
       should_clean:
         type: boolean
     secrets:
-      CLEANER_TOKEN:
       PERSONAL_TOKEN:
       CF_SECRET:
-      CF_ACCOUNT_ID:
-      CF_ZONE_ID:
 
 defaults:
   run:
@@ -34,29 +31,15 @@ jobs:
   # Clean job
   cleaner:
     name: Actions Clean
-    runs-on: ubuntu-latest
     if: ${{ inputs.should_clean }}
-    continue-on-error: true
-    steps:
-      - name: Clean GH Actions
-        id: clean
-        uses: igorjs/gh-actions-clean-workflow@5fa2e3a4fdd40e3e7098645a0b8df08624352e5e
-        with:
-          token: ${{ secrets.CLEANER_TOKEN }}
-          runs_to_keep: 1
-          runs_older_than: 0
-
-      - name: Display metrics
-        run: |
-          echo "Total runs found: ${{ steps.clean.outputs.total-runs-found }}"
-          echo "Runs deleted: ${{ steps.clean.outputs.runs-deleted }}"
-          echo "Runs failed: ${{ steps.clean.outputs.runs-failed }}"
-          echo "API requests: ${{ steps.clean.outputs.total-api-requests }}"
-          echo "Rate limit hits: ${{ steps.clean.outputs.rate-limit-hits }}"
+    uses: ./.github/workflows/clean.yml
+    secrets:
+      CLEAN_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build:
     runs-on: ubuntu-latest
     name: Jekyll Build
+    environment: jekyll
     steps:
       - name: Checkout
         uses: actions/checkout@v7

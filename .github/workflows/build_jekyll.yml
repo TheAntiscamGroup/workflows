@@ -5,7 +5,6 @@
 # * A run.sh in .github/
 
 name: Build And Deploy Jekyll Site
-
 on:
   workflow_call:
     inputs:

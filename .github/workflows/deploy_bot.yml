@@ -1,0 +1,100 @@
+# ScamGuard uses this to deploy it's python workers.
+# This requires an environment called "production"
+# as well as ./github/filters.yml in the repo
+
+name: Deploy Bots To Cloud via SSH
+on:
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        required: true
+      path:
+        type: string
+        required: true
+      force_restart:
+        type: boolean
+
+permissions:
+  deployments: write
+  contents: read
+
+jobs:
+  cleanup:
+    name: Cleanup Previous Deployments
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: strumwolf/delete-deployment-environment@035f6d27c8b8951729f4d71b2d3d6a7975139476
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          environment: production
+          onlyRemoveDeployments: true
+  deploy:
+    environment: production
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout files
+      uses: actions/checkout@v7
+      with:
+        ref: ${{ inputs.ref }}
+
+    - name: Dependency Update Check
+      uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d
+      id: filter
+      with:
+        base: ${{ inputs.ref }}
+        filters: .github/filters.yml
+
+    - name: Configure SSH
+      run: |
+        mkdir -p ~/.ssh/
+        echo "$SSH_KEY" > ~/.ssh/staging.key
+        chmod 600 ~/.ssh/staging.key
+        cat >>~/.ssh/config <<END
+        Host staging
+          HostName $SSH_HOST
+          User $SSH_USER
+          IdentityFile ~/.ssh/staging.key
+          StrictHostKeyChecking no
+        END
+      env:
+        SSH_HOST: ${{ secrets.SSH_HOST }}
+        SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        SSH_USER: ${{ secrets.SSH_USERNAME }}
+
+      # If any runtime files updated, then we need to stop all bot instances.
+    - name: Kill Running Instances
+      id: kill_bot
+      continue-on-error: true
+      if: steps.filter.outputs.deps_update_needed == 'true' || steps.filter.outputs.core_updated == 'true' || inputs.force_restart == 'true'
+      run: ssh staging 'cd $PROJECT_PATH && .runtime/kill.sh'
+      env:
+        PROJECT_PATH: ${{ inputs.path }}
+
+    # We want to update the project regardless.
+    - name: Sync Project
+      run: ssh staging 'cd $PROJECT_PATH && .runtime/pull.sh'
+      env:
+        PROJECT_PATH: ${{ inputs.path }}
+
+    # attempt to update any python dependencies
+    - name: Update Python Dependencies
+      id: deps_update
+      if: steps.filter.outputs.deps_update_needed == 'true'
+      continue-on-error: false
+      run: ssh staging 'set -e && cd $PROJECT_PATH && .runtime/update.sh'
+      env:
+        PROJECT_PATH: ${{ inputs.path }}
+
+    # restart instances
+    - name: Restart Instances
+      if: ${{ always() && (steps.deps_update.conclusion == 'success' || steps.deps_update.outcome == 'skipped') && steps.kill_bot.conclusion == 'success' }}
+      run: ssh staging 'cd $PROJECT_PATH && .runtime/run.sh -d'
+      env:
+        PROJECT_PATH: ${{ inputs.path }}
+
+    # Remove the key once done
+    - name: Kill SSH Add
+      if: ${{ always() }}
+      run: rm -f ~/.ssh/staging.key

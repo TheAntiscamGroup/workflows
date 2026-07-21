@@ -4,17 +4,18 @@
 # This environment must have:
 #   var:CLOUDFLARE_ZONE
 #   secret:CLOUDFLARE_TOKEN
+#
+# You can also bypass the environment by passing CLOUDFLARE_TOKEN explicitly
 
 name: Build OpenAPI Spec
-
 on:
   workflow_call:
     inputs:
-      needs_node:
-        type: boolean
       ref:
         type: string
         required: true
+      needs_node:
+        type: boolean
       is_download:
         type: boolean
       download_uri:
@@ -36,6 +37,12 @@ jobs:
     runs-on: ubuntu-latest
     environment: openapi
     steps:
+      - name: Check if CF token exists
+        id: token
+        env:
+          token_check: ${{ secrets.CLOUDFLARE_TOKEN }}
+        if: ${{ env.token_check == '' }}
+        run: echo "Missing Cloudflare Token! Exiting..." && exit 1
       - name: Checkout
         uses: actions/checkout@v7.0.0
       - name: Setup Node
@@ -56,7 +63,7 @@ jobs:
         run: curl --no-progress-meter --output openapi.json "$DOWNLOAD_URL"
         env:
           DOWNLOAD_URL: ${{ inputs.download_uri }}
-      - name: Check for Spec Prepared
+      - name: Check for Spec Existing
         id: spec_check
         run: |
           if test -f "openapi.json"; then

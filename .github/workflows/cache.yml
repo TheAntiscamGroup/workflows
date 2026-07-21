@@ -1,0 +1,23 @@
+# This workflow requires an environment named Cloudflare or repo settings
+# with the following:
+#   vars:CLOUDFLARE_ZONE
+#   vars:CLOUDFLARE_ACCOUNT_ID
+#   secret:CLOUDFLARE_TOKEN
+name: Clear Cloudflare Cache
+
+on:
+  workflow_call:
+
+jobs:
+  clear_cache:
+    name: Clear Cloudflare Cache
+    runs-on: ubuntu-latest
+    permissions: {}
+    environment: cloudflare
+    steps:
+      - name: Cloudflare Cache Cleaner
+        uses: Cyb3r-Jak3/action-cloudflare-cache@6ebf798ade84e7ab7da249404e0c3b9aecf54f88
+        with:
+          zone: ${{ vars.CLOUDFLARE_ZONE }}
+          api_token: ${{ secrets.CLOUDFLARE_TOKEN }}
+          account_id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}

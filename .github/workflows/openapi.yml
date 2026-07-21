@@ -52,7 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: openapi
     steps:
-      - name: Check if CF token exists
+      - name: Error if CF token is missing
         id: token
         env:
           token_check: ${{ secrets.CLOUDFLARE_TOKEN }}

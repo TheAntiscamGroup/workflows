@@ -30,7 +30,7 @@ permissions:
 
 jobs:
   build_spec:
-    name: Generate Spec
+    name: Generate & Upload Spec
     runs-on: ubuntu-latest
     environment: openapi
     steps:
@@ -55,22 +55,24 @@ jobs:
         env:
           DOWNLOAD_URL: ${{ inputs.download_uri }}
       - name: Check for Spec Prepared
-        id: spec-check
+        id: spec_check
         run: |
           if test -f "openapi.json"; then
             echo "has_file=true" >> $GITHUB_OUTPUT
+            echo "File Exists"
           else
             echo "has_file=false" >> $GITHUB_OUTPUT
+            echo "File Missing!"
           fi
       - name: Upload Spec to API Shield
-        if: ${{ steps.spec-check.outputs.has_file == 'true' }}
+        if: ${{ steps.spec_check.outputs.has_file == 'true' }}
         uses: socksthewolf/cloudflare-upload-spec@4aa5efd32ce6fc898dcb794ccd7e3001568cce10
         with:
           zone_id: ${{ vars.CLOUDFLARE_ZONE }}
           api_token: ${{ secrets.CLOUDFLARE_TOKEN }}
           delete_others: true
       - name: Upload Spec as Artifact
-        if: ${{ steps.spec-check.outputs.has_file == 'true' }}
+        if: ${{ success() && steps.spec_check.outputs.has_file == 'true' }}
         uses: actions/upload-artifact@v7
         with:
           name: openapi-spec-${{ inputs.ref }}

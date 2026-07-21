@@ -19,10 +19,6 @@ defaults:
   run:
     shell: bash
 
-concurrency:
-  group: build
-  cancel-in-progress: true
-
 permissions:
   contents: read
   actions: write
@@ -32,8 +28,6 @@ jobs:
   cleaner:
     name: Actions Clean
     runs-on: ubuntu-latest
-    permissions:
-      actions: write
     continue-on-error: true
     steps:
       - name: Clean GH Actions

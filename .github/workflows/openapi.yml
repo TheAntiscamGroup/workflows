@@ -1,0 +1,82 @@
+# Build, uploads and publishes OpenAPI specs.
+#
+# Must have a openapi environment.
+# This environment must have:
+#   var:CLOUDFLARE_ZONE
+#   secret:CLOUDFLARE_TOKEN
+
+name: Build OpenAPI Spec
+
+on:
+  workflow_call:
+    inputs:
+      needs_node:
+        type: boolean
+      ref:
+        type: string
+        required: true
+      is_download:
+        type: boolean
+      download_uri:
+        type: string
+
+concurrency:
+  group: openapi
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build_spec:
+    name: Generate Spec
+    runs-on: ubuntu-latest
+    environment: openapi
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.0
+      - name: Setup Node
+        if: ${{ inputs.needs_node }}
+        uses: actions/setup-node@v6
+        with:
+          cache: "npm"
+          node-version-file: ".node-version"
+          package-manager-cache: true
+      - name: Node Install Packages
+        if: ${{ inputs.needs_node }}
+        run: npm install
+      - name: Run OpenAPI Gen
+        if: ${{ inputs.needs_node }}
+        run: npm run openapi
+      - name: Download OpenAPI Spec
+        if: ${{ inputs.is_download && inputs.download_uri != '' }}
+        run: curl --no-progress-meter --output openapi.json "$DOWNLOAD_URL"
+        env:
+          DOWNLOAD_URL: ${{ inputs.download_uri }}
+      - name: Check for Spec Prepared
+        id: spec-check
+        run: |
+          if test -f "openapi.json"; then
+            echo "has_file=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_file=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Upload Spec to API Shield
+        if: ${{ steps.spec-check.outputs.has_file == 'true' }}
+        uses: socksthewolf/cloudflare-upload-spec@4aa5efd32ce6fc898dcb794ccd7e3001568cce10
+        with:
+          zone_id: ${{ vars.CLOUDFLARE_ZONE }}
+          api_token: ${{ secrets.CLOUDFLARE_TOKEN }}
+          delete_others: true
+      - name: Upload Spec as Artifact
+        if: ${{ steps.spec-check.outputs.has_file == 'true' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: openapi-spec-${{ inputs.ref }}
+          path: ./openapi.json
+          archive: false
+          if-no-files-found: error

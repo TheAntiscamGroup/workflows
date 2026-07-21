@@ -1,0 +1,117 @@
+# Builds, cleans, optimizes and publishes a Jekyll Website onto Cloudflare
+#
+# This requires:
+# * A filter_rules.yml in .github/
+# * A run.sh in .github/
+
+name: Build And Deploy Jekyll Site
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        required: true
+      force_clear:
+        type: boolean
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: build
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  # Clean job
+  cleaner:
+    name: Actions Clean
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    continue-on-error: true
+    steps:
+      - name: Clean GH Actions
+        id: clean
+        uses: igorjs/gh-actions-clean-workflow@5fa2e3a4fdd40e3e7098645a0b8df08624352e5e
+        with:
+          token: ${{ secrets.CLEANER_TOKEN }}
+          runs_to_keep: 1
+          runs_older_than: 0
+
+      - name: Display metrics
+        run: |
+          echo "Total runs found: ${{ steps.clean.outputs.total-runs-found }}"
+          echo "Runs deleted: ${{ steps.clean.outputs.runs-deleted }}"
+          echo "Runs failed: ${{ steps.clean.outputs.runs-failed }}"
+          echo "API requests: ${{ steps.clean.outputs.total-api-requests }}"
+          echo "Rate limit hits: ${{ steps.clean.outputs.rate-limit-hits }}"
+
+  build:
+    runs-on: ubuntu-latest
+    name: Jekyll Build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Cache Clear Check
+        uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706
+        id: filter
+        with:
+          base: ${{ inputs.ref }}
+          filters: ".github/filter_rules.yml"
+      - name: Setup node
+        uses: actions/setup-node@v6
+        with:
+          cache: "npm"
+          node-version-file: ".node-version"
+          package-manager-cache: true
+      - name: Node Package Install
+        run: npm install
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@4eb9f110bac952a8b68ecf92e3b5c7a987594ba6
+        with:
+          bundler-cache: true
+          cache-version: 1
+      - name: Build with Jekyll
+        # Outputs to the './_site' directory by default
+        run: bundle exec jekyll build --baseurl ""
+        env:
+          JEKYLL_ENV: production
+        # Run arbitrary shell for running commands after build
+      - name: After Build Execution
+        if: success()
+        env:
+          TOKEN: ${{ secrets.PERSONAL_TOKEN }}
+        run: bash .github/run.sh
+      - name: Purge CSS
+        # idk why but the output directory is much different than what it is on windows
+        # this should fix all of it though
+        if: success()
+        run: npm run purge-ci
+      - name: No Maps
+        run: rm -rf _site/assets/**/*.map
+      - name: No Feeds
+        run: rm -f _site/feed.xml
+        # Convert jekyll redirects into CF redirects
+      - name: Redirect Update
+        uses: socksthewolf/jekyll-cloudflare-redirects@0ca292af046fe1f9b482bed5adb3964c78cf31c3
+        # Upload directory to CF
+      - name: Upload to Cloudflare
+        if: success()
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_SECRET }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: npm run deploy
+        # Delete the cloudflare cache after deploy
+      - name: Cloudflare Cache Cleaner
+        if: success() && (steps.filter.outputs.clear_cache == 'true' || inputs.force_clear == 'true')
+        uses: Cyb3r-Jak3/action-cloudflare-cache@6ebf798ade84e7ab7da249404e0c3b9aecf54f88
+        with:
+          zone: ${{ secrets.CF_ZONE_ID }}
+          api_token: ${{ secrets.CF_SECRET }}
+          account_id: ${{ secrets.CF_ACCOUNT_ID }}

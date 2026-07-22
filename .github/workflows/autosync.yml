@@ -18,6 +18,11 @@ defaults:
 permissions: {}
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: "This is running!"
+
   cleaner:
     name: Actions Clean
     uses: ./.github/workflows/clean.yml

@@ -13,8 +13,10 @@ on:
         required: true
       force_clear:
         type: boolean
+        default: false
       should_clean:
         type: boolean
+        default: false
     secrets:
       PERSONAL_TOKEN:
       CF_SECRET:

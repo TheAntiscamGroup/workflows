@@ -10,9 +10,9 @@ on:
     secrets:
       CLOUDFLARE_TOKEN:
     inputs:
-      # If there are specific URLS to be cleared, must be a multi-line input
       paths:
         type: string
+        description: "If there are specific URLS to be cleared, this should be a multi-line input. If zone should be cleared, leave blank"
         default: ""
 
 jobs:

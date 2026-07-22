@@ -3,6 +3,7 @@ on:
   workflow_call:
     inputs:
       environment:
+        description: "The Github Environment to clean up deploys for"
         type: string
         required: true
 
@@ -12,7 +13,7 @@ permissions:
 jobs:
   # Clean up github job
   clean_deploys:
-    name: Cleanup Previous Deployments
+    name: Cleanup Deployments
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:

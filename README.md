@@ -12,9 +12,10 @@ So now it's one place to manage my workflows that can be used across orgs/repos.
 
 ### On Secrets
 
-**tl:dr;** If you want to use the secrets without passing them explicitly in an org, you _must_ fork the repo.
+**tl:dr**: If you want to use the secrets without passing them explicitly in an org, you _must_ fork the repo.
 
 Otherwise, secrets will not transfer automatically even when the environment exists already in the repo.
+
 If you do not want to fork, you must manually pass the secrets.
 
 #### Limitations
@@ -22,15 +23,17 @@ If you do not want to fork, you must manually pass the secrets.
 Secrets are funny, there are some undocumented quirks about them:
 
 - You can only manually pass secrets that are stored on the repo/org level
-- You **cannot** load an environment manually and pass secret defined there
-    - There are bypasses to this, but they slightly compromise the integrity of the secrets store
+- You **cannot** load an environment manually and pass secrets defined from there
+  - There are bypasses to this, but they slightly compromise the integrity of the secrets store
 - **However**, secrets stored in environments will _automatically be passed_ if the action is called with `secrets: inherit`
-    - This behavior does chain properly to chained invokations
-    - _Only the initial caller_ has to specify the inherit option
+  - This behavior does chain properly to chained invocations
+  - _Only the initial caller_ has to specify the inherit option
 - If you want to use inherit on an org level, you must fork this repo
-    - This _may_ only be a restriction for orgs, had mixed success while testing user references
+  - This _may_ only be a restriction for orgs, had mixed success while testing user references
+- You _do not_ need `secrets: inherit` for the use of `GITHUB_TOKEN`, so long as your calling actions contain the same permissions
 
 ---
+
 ### On Forking
 
 You must:

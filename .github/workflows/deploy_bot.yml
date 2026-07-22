@@ -15,12 +15,15 @@ on:
       SSH_USER:
     inputs:
       ref:
+        description: "Pass github.ref"
         type: string
         required: true
       path:
+        description: "The remote directory path of where your bots sit in"
         type: string
         required: true
       force_restart:
+        description: "If the bot should be automatically restarted"
         type: boolean
         default: false
 

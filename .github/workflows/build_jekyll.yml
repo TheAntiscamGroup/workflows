@@ -3,9 +3,10 @@
 # This requires:
 # * A filter_rules.yml in .github/
 #   * This file must have a rule in it for "clear_cache"
-# * A run.sh in .github/ (if needs_after_run is true)
+# * A run.sh in .github/
+#   * But only if needs_after_run is true
 # * An env named jekyll that defines:
-#   * secrets:PERSONAL_TOKEN
+#   * secrets:PERSONAL_TOKEN (optional, can also be passed)
 #   * vars:CLOUDFLARE_ACCOUNT_ID
 #   * secrets:CF_SECRET
 
@@ -14,23 +15,30 @@ on:
   workflow_call:
     inputs:
       ref:
+        description: "Pass github.ref"
         type: string
         required: true
       force_clear:
+        description: "If we should force clear the cache"
         type: boolean
         default: false
       should_clean:
+        description: "If we should clean actions & deploys before execution"
         type: boolean
         default: false
       ruby_cache_version:
+        description: "The Ruby cache storage number"
         type: number
         default: 1
       needs_after_run:
+        description: "If we should execute a shell script after running the build"
         type: boolean
         default: false
     secrets:
       PERSONAL_TOKEN:
+        description: "Passed to the shell via a $TOKEN flag if needs_after_run is true"
       CF_SECRET:
+        description: "This must be able to clear cache and deploy sites/bindings"
 
 defaults:
   run:
@@ -39,14 +47,20 @@ defaults:
 permissions:
   contents: read
   actions: write
+  deployments: write
 
 jobs:
-  cleaner:
+  clean_actions:
     name: Actions Clean
     if: ${{ inputs.should_clean }}
-    uses: ./.github/workflows/clean.yml
-    secrets:
-      CLEAN_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    uses: ./.github/workflows/clean_actions.yml
+
+  clean_deploys:
+    name: Deployments Clean
+    if: ${{ inputs.should_clean }}
+    uses: ./.github/workflows/clean_deploys.yml
+    with:
+      environment: jekyll
 
   build:
     runs-on: ubuntu-latest
@@ -91,7 +105,7 @@ jobs:
 
         # Run arbitrary shell for running commands after build
       - name: After Build Execution
-        if: ${{ success() && inputs.needs_after_run != 'false' }}
+        if: ${{ success() && inputs.needs_after_run == 'true' }}
         env:
           TOKEN: ${{ secrets.PERSONAL_TOKEN }}
         run: bash .github/run.sh
@@ -127,6 +141,6 @@ jobs:
     needs: build
     if: success() && (needs.build.outputs.clear_cache == 'true' || inputs.force_clear == 'true')
     name: Cloudflare Cache Cleaner
-    uses: ./.github/workflows/cache.yml
+    uses: ./.github/workflows/clear_cache.yml
     secrets:
       CLOUDFLARE_TOKEN: ${{ secrets.CF_SECRET }}

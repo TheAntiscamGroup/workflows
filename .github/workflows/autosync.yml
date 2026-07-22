@@ -17,24 +17,13 @@ defaults:
   run:
     shell: bash
 
-permissions: {}
+permissions:
+  actions: write
 
 jobs:
   clean_base:
-    name: Base Repo Actions Clean
-    if: ${{ github.repository == 'socksthewolf/workflows' }}
-    permissions:
-      actions: write
-    uses: ./.github/workflows/clean.yml
-    secrets:
-      CLEAN_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  cleaner:
-    name: Forked Actions Clean
-    if: ${{ github.repository != 'socksthewolf/workflows' }}
-    uses: ./.github/workflows/clean.yml
-    secrets:
-      CLEAN_TOKEN: ${{ secrets.WORKFLOW_UPDATE }}
+    name: Actions Clean
+    uses: ./.github/workflows/clean_actions.yml
 
   sync:
     name: Sync All Other Forks

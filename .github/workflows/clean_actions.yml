@@ -1,8 +1,9 @@
 name: Clean GH Actions
 on:
   workflow_call:
-    secrets:
-      CLEAN_TOKEN:
+
+permissions:
+  actions: write
 
 jobs:
   # Clean up github job
@@ -10,14 +11,14 @@ jobs:
     name: Cleanup Actions
     runs-on: ubuntu-latest
     steps:
-      - name: Run Clean
+      - name: Clean
         uses: igorjs/gh-actions-clean-workflow@5fa2e3a4fdd40e3e7098645a0b8df08624352e5e
         id: clean
         with:
-          token: ${{ secrets.CLEAN_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           runs_to_keep: 1
           runs_older_than: 0
-      - name: Display metrics
+      - name: Outputs
         run: |
           echo "Total runs found: ${{ steps.clean.outputs.total-runs-found }}"
           echo "Runs deleted: ${{ steps.clean.outputs.runs-deleted }}"

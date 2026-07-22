@@ -4,6 +4,7 @@ on:
   workflow_call:
     secrets:
       KEY:
+        description: "The SHA key for your tangled repo"
 
 permissions:
   contents: read

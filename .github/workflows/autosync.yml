@@ -22,7 +22,7 @@ jobs:
         id: sync
         if: ${{ github.repository != 'socksthewolf/workflows' }}
         run: |
-          response=curl -L --fail-with-body \
+          response=curl --location --fail-with-body \
             -X POST \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer $TOKEN" \
@@ -30,6 +30,7 @@ jobs:
             https://api.github.com/repos/$/merge-upstream \
             -d '{"branch":"$BRANCH"}' >> "$GITHUB_OUTPUT"
           exit_code="$?"
+          echo $response
           exit "$exit_code"
         env:
           REPO: ${{ github.repository }}

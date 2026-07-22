@@ -7,7 +7,8 @@
 
 name: Auto Merge Upstream
 on:
-  push:
+  # I don't know why, but it appears that this cron is never running
+  # And it's completely mysterious.
   schedule:
     - cron: '*/5 * * * *'
 

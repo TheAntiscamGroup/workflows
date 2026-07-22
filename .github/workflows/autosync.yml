@@ -1,0 +1,37 @@
+name: Auto Merge Upstream
+on:
+  workflow_call:
+  schedule:
+    - cron: '*/30 * * * *' # every 30 minutes
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  sync:
+    outputs:
+      response: ${{ steps.sync.outputs.response }}
+    name: Sync All Other Forks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync
+        id: sync
+        if: ${{ github.repository != 'socksthewolf/workflows' }}
+        run: |
+          response=curl -L --fail-with-body \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "X-GitHub-Api-Version: 2026-03-10" \
+            https://api.github.com/repos/$/merge-upstream \
+            -d '{"branch":"$BRANCH"}' >> "$GITHUB_OUTPUT"
+          exit_code="$?"
+          exit "$exit_code"
+        env:
+          REPO: ${{ github.repository }}
+          TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.ref_name }}

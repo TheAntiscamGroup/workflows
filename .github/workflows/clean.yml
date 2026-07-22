@@ -1,5 +1,4 @@
 name: Clean GH Actions
-
 on:
   workflow_call:
     secrets:

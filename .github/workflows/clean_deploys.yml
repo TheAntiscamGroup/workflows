@@ -1,5 +1,4 @@
 name: Clean GH Deploys
-
 on:
   workflow_call:
     inputs:

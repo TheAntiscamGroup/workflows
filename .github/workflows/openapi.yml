@@ -51,14 +51,20 @@ jobs:
     runs-on: ubuntu-latest
     environment: openapi
     steps:
+        # Check if we can run
       - name: Error if CF token is missing
         id: token
         env:
           token_check: ${{ secrets.CLOUDFLARE_TOKEN }}
         if: ${{ env.token_check == '' }}
         run: echo "Missing Cloudflare Token! Exiting..." && exit 1
-      - name: Checkout
+
+        # Checkout all files
+      - name: Checkout Repository
+        if: ${{ inputs.is_download == 'false' }}
         uses: actions/checkout@v7
+
+        # Build sitemap with node
       - name: Setup Node
         if: ${{ inputs.needs_node }}
         uses: actions/setup-node@v7
@@ -66,17 +72,19 @@ jobs:
           cache: "npm"
           node-version-file: ".node-version"
           package-manager-cache: true
-      - name: Node Install Packages
+
+      - name: Install and Build Spec
         if: ${{ inputs.needs_node }}
-        run: npm install
-      - name: Run OpenAPI Gen
-        if: ${{ inputs.needs_node }}
-        run: npm run openapi
+        run: npm install && npm run openapi
+
+        # Download Existing OpenAPI spec if provided
       - name: Download OpenAPI Spec
         if: ${{ inputs.is_download && inputs.download_uri != '' }}
         run: curl --no-progress-meter --output openapi.json "$DOWNLOAD_URL"
         env:
           DOWNLOAD_URL: ${{ inputs.download_uri }}
+
+        # Check to see that we have the openapi file at all
       - name: Check for Spec Existing
         id: spec_check
         run: |
@@ -87,6 +95,8 @@ jobs:
             echo "has_file=false" >> $GITHUB_OUTPUT
             echo "File Missing!"
           fi
+
+        # If we have the file, upload it to CF API Shield
       - name: Upload Spec to API Shield
         if: ${{ steps.spec_check.outputs.has_file == 'true' }}
         uses: socksthewolf/cloudflare-upload-spec@4aa5efd32ce6fc898dcb794ccd7e3001568cce10
@@ -94,6 +104,8 @@ jobs:
           zone_id: ${{ vars.CLOUDFLARE_ZONE }}
           api_token: ${{ secrets.CLOUDFLARE_TOKEN }}
           delete_others: true
+
+        # Additionally, save it to our GH artifacts
       - name: Upload Spec as Artifact
         if: ${{ success() && steps.spec_check.outputs.has_file == 'true' }}
         uses: actions/upload-artifact@v7

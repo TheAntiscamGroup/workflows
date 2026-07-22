@@ -40,7 +40,7 @@ jobs:
     if: ${{ github.repository != 'socksthewolf/workflows' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Check if Secret Defined
+      - name: Fail if secrets are not defined
         env:
           has_token: ${{ secrets.WORKFLOW_UPDATE }}
         if: ${{ env.has_token == '' }}

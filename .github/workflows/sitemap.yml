@@ -1,5 +1,4 @@
 # Builds a sitemap using sscli, then commits it to the repository
-
 name: Build and Commit Sitemap
 on:
   workflow_call:
@@ -41,7 +40,7 @@ jobs:
     environment: sitemap
     steps:
       - name: Checkout
-        uses: actions/checkout@v7.0.0
+        uses: actions/checkout@v7
         with:
           ref: "main"
           fetch-depth: 0
@@ -83,17 +82,10 @@ jobs:
           commit_options: '-S'
 
   clear_sitemap_cache:
-    runs-on: ubuntu-latest
+    name: Clear Sitemap Cache
     needs: update
     if: ${{ needs.update.outputs.needs_clear == 'true' }}
-    permissions: {}
-    environment: cloudflare
-    steps:
-      - name: Cloudflare Cache Cleaner
-        uses: Cyb3r-Jak3/action-cloudflare-cache@6ebf798ade84e7ab7da249404e0c3b9aecf54f88
-        with:
-          zone: ${{ vars.CLOUDFLARE_ZONE }}
-          api_token: ${{ secrets.CLOUDFLARE_TOKEN }}
-          account_id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-          URLs: |
-            ${{ inputs.live_url }}
+    uses: ./.github/workflows/cache.yml
+    with:
+      paths: |
+        ${{ inputs.live_url }}

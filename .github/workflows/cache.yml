@@ -9,6 +9,11 @@ on:
   workflow_call:
     secrets:
       CLOUDFLARE_TOKEN:
+    inputs:
+      # If there are specific URLS to be cleared, must be a multi-line input
+      paths:
+        type: string
+        default: ""
 
 jobs:
   clear_cache:
@@ -17,9 +22,16 @@ jobs:
     permissions: {}
     environment: cloudflare
     steps:
-      - name: Cloudflare Cache Cleaner
+      - name: Clearing Entire Zone
+        if: ${{ inputs.paths == '' }}
+        run: echo true
+      - name: Clearing Individual Paths
+        if: ${{ inputs.paths != '' }}
+        run: echo true
+      - name: Clear Cache
         uses: Cyb3r-Jak3/action-cloudflare-cache@6ebf798ade84e7ab7da249404e0c3b9aecf54f88
         with:
           zone: ${{ vars.CLOUDFLARE_ZONE }}
           api_token: ${{ secrets.CLOUDFLARE_TOKEN }}
           account_id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          URLs: ${{ inputs.paths }}

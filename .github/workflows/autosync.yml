@@ -19,11 +19,6 @@ defaults:
 permissions: {}
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "This is running!"
-
   clean_base:
     name: Clean Base Repo Actions
     if: ${{ github.repository == 'socksthewolf/workflows' }}

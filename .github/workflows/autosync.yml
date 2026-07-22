@@ -5,6 +5,7 @@ on:
   workflow_dispatch: {}
 
 permissions:
+  actions: write
   contents: write
 defaults:
   run:
@@ -13,12 +14,17 @@ defaults:
 jobs:
   sync:
     name: Sync All Other Forks
+    if: ${{ github.repository != 'socksthewolf/workflows' }}
     runs-on: ubuntu-latest
     steps:
+      - name: Clean Actions
+        continue-on-error: true
+        uses: ./.github/workflows/clean.yml
+        with:
+          CLEAN_TOKEN: ${{ github.token }}
       - name: Run GH Sync
-        id: sync
-        if: ${{ github.repository != 'socksthewolf/workflows' }}
         run: "gh api --method POST -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2026-03-10' /repos/$REPO/merge-upstream -f 'branch=main'"
         env:
           REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
+

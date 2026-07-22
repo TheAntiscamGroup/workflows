@@ -34,7 +34,6 @@ permissions:
   actions: write
 
 jobs:
-  # Clean job
   cleaner:
     name: Actions Clean
     if: ${{ inputs.should_clean }}
@@ -49,8 +48,10 @@ jobs:
     outputs:
       clear_cache: ${{ steps.filter.outputs.clear_cache == 'true' }}
     steps:
+        # Check out the repo files
       - name: Checkout
         uses: actions/checkout@v7
+
         # Check for if we should Clear the Cache at the end of all steps
       - name: Cache Clear Check
         uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706
@@ -70,7 +71,7 @@ jobs:
         run: npm install
 
 
-        # Also set up Ruby for Jekyll
+        # Also set up Ruby to build for Jekyll
       - name: Setup Ruby
         uses: ruby/setup-ruby@a30dfa457ad68707b8b910ac3a244714b61c0626
         with:
@@ -81,12 +82,15 @@ jobs:
         run: bundle exec jekyll build --baseurl ""
         env:
           JEKYLL_ENV: production
+
         # Run arbitrary shell for running commands after build
       - name: After Build Execution
         if: success()
         env:
           TOKEN: ${{ secrets.PERSONAL_TOKEN }}
         run: bash .github/run.sh
+
+        # Minimize/Purge any excess CSS rules that are unused
       - name: Purge CSS
         # idk why but the output directory is much different than what it is on windows
         # this should fix all of it though

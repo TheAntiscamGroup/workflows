@@ -34,27 +34,31 @@ jobs:
       needs_clear: ${{ steps.commit.outputs.changes_detected }}
     environment: sitemap
     steps:
+        # Grab all files + History
       - name: Checkout
         uses: actions/checkout@v7
         with:
           ref: "main"
           fetch-depth: 0
+        # Fix modification timestamps
       - name: Fix Timestamps
         uses: chetan/git-restore-mtime-action@d186aca54f8760da4dec55313195e51ed3ebb0b3
         with:
           args: --no-directories --skip-missing
+
+        # Install node
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
           cache: "npm"
           node-version-file: ".node-version"
           package-manager-cache: true
-      - name: Node Install Packages
+        # Build Node
+      - name: Install and Build Sitemap
         if: success()
-        run: npm install
-      - name: Rebuild Sitemap
-        if: success()
-        run: npm run sitemap
+        run: npm install && npm run sitemap
+
+        # Set up the GPG Key for Signing Commits
       - name: Setup GPG Key
         id: import-gpg
         if: success()
@@ -64,6 +68,8 @@ jobs:
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
           git_user_signingkey: true
           git_commit_gpgsign: true
+
+        # Commit Sitemap Changes (if Any)
       - name: Commit the Changes
         if: success()
         id: commit

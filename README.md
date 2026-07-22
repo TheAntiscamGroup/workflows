@@ -8,8 +8,9 @@ And god forbid any of them have a vulnerability in them.
 
 So now it's one place to manage my workflows that can be used across orgs/repos.
 
----
-## On Organization Secrets
+## Notes
+
+### On Organization Secrets
 
 **NOTE**: If you want to use the secrets without passing them explicitly in an org, you _must_ fork the repo.
 

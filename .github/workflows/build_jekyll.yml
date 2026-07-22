@@ -92,7 +92,7 @@ jobs:
 
         # Run arbitrary shell for running commands after build
       - name: After Build Execution
-        if: success() && {{ inputs.needs_after_run != 'false' }}
+        if: success() && ${{ inputs.needs_after_run != 'false' }}
         env:
           TOKEN: ${{ secrets.PERSONAL_TOKEN }}
         run: bash .github/run.sh

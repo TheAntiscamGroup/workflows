@@ -1,12 +1,15 @@
+# Because of the nature of this repo, you will need a PAT for your other repo
+# in order to update and sync the files from the workflow.
+#
+# Needs: contents(write), workflows(write)
+#
+# This token should be stored as a WORKFLOW_UPDATE secret
+
 name: Auto Merge Upstream
 on:
   schedule:
     - cron: '*/30 * * * *' # every 30 minutes
   workflow_dispatch: {}
-
-permissions:
-  actions: write
-  contents: write
 
 defaults:
   run:
@@ -15,6 +18,9 @@ defaults:
 jobs:
   clean:
     name: Clean Actions
+    permissions:
+      contents: read
+      actions: write
     continue-on-error: true
     runs-on: ubuntu-latest
     steps:
@@ -28,19 +34,9 @@ jobs:
     if: ${{ github.repository != 'socksthewolf/workflows' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Get Actions
-        uses: thiagokokada/merge-upstream@v1.0.2
-        with:
-          branch: main
-
-# this needs a github PAT in order to work via the GH API.
-  bad:
-    if: ${{ false }}
-    runs-on: ubuntu-latest
-    steps:
       - name: Run GH Sync
         run: "gh api --method POST -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2026-03-10' /repos/$REPO/merge-upstream -f 'branch=main'"
         env:
           REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.WORKFLOW_UPDATE }}
 

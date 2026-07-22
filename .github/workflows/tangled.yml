@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   clean_deployments:
-    name: Clean Previous Deploys
+    name: Clean Tangled Deploys
     uses: ./.github/workflows/clean_deploys.yml
     with:
       environment: tangled

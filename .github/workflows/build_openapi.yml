@@ -67,7 +67,7 @@ jobs:
 
         # Checkout all files
       - name: Checkout Repository
-        if: ${{ inputs.is_download == 'false' }}
+        if: ${{ inputs.is_download != 'true' }}
         uses: actions/checkout@v7
 
         # Build sitemap with node

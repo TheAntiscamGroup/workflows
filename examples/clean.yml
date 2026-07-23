@@ -1,0 +1,19 @@
+# Cleans up previous GH action queues
+name: Clean GH Actions
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+
+permissions:
+  actions: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run:
+    name: Cleanup
+    uses: socksthewolf/workflows/.github/workflows/clean_actions.yml@main

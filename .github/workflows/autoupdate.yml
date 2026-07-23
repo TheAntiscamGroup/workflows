@@ -54,16 +54,22 @@ jobs:
 
       - name: Find Node Directory
         id: node_directory
+        # Welcome to the hack zone, I hate it here
         run: |
           dir=$(dirname $(realpath $(find . -name 'wrangler.toml')))
           dir=${dir/$WORKSPACE}
           dir=${dir#/}
           echo "dir=${dir}" >> "$GITHUB_OUTPUT"
           echo ${dir}
-          echo "ver=${dir}/.node-version" >> "$GITHUB_OUTPUT"
-          echo "lock=${dir}/package-lock.json" >> "$GITHUB_OUTPUT"
-          echo "pack=${dir}/package.json" >> "$GITHUB_OUTPUT"
-          echo ${dir}/package-lock.json
+          if [[ "$dir" != "" ]]; then
+            echo "ver=${dir}/.node-version" >> "$GITHUB_OUTPUT"
+            echo "lock=${dir}/package-lock.json" >> "$GITHUB_OUTPUT"
+            echo "pack=${dir}/package.json" >> "$GITHUB_OUTPUT"
+          else
+            echo "ver=${dir}.node-version" >> "$GITHUB_OUTPUT"
+            echo "lock=${dir}package-lock.json" >> "$GITHUB_OUTPUT"
+            echo "pack=${dir}package.json" >> "$GITHUB_OUTPUT"
+          fi
         env:
           WORKSPACE: ${{ github.workspace }}
 

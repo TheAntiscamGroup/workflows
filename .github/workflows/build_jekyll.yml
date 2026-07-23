@@ -8,7 +8,7 @@
 # * An env named jekyll that defines:
 #   * secrets:PERSONAL_TOKEN (optional, can also be passed)
 #   * vars:CLOUDFLARE_ACCOUNT_ID
-#   * secrets:CF_SECRET
+#   * secrets:CLOUDFLARE_TOKEN
 
 name: Build And Deploy Jekyll Site
 on:
@@ -37,7 +37,7 @@ on:
     secrets:
       PERSONAL_TOKEN:
         description: "Passed to the shell via a $TOKEN flag if needs_after_run is true"
-      CF_SECRET:
+      CLOUDFLARE_TOKEN:
         description: "This must be able to clear cache and deploy sites/bindings"
 
 defaults:
@@ -132,7 +132,7 @@ jobs:
       - name: Upload to Cloudflare
         if: success()
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_SECRET }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: npm run deploy
 
@@ -143,4 +143,4 @@ jobs:
     name: Cloudflare Cache Cleaner
     uses: ./.github/workflows/clear_cache.yml
     secrets:
-      CLOUDFLARE_TOKEN: ${{ secrets.CF_SECRET }}
+      CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_TOKEN }}

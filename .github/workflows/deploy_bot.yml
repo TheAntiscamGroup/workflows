@@ -12,7 +12,7 @@ on:
     secrets:
       SSH_HOST:
       SSH_PRIVATE_KEY:
-      SSH_USER:
+      SSH_USERNAME:
     inputs:
       ref:
         description: "Pass github.ref"
@@ -23,9 +23,13 @@ on:
         type: string
         required: true
       force_restart:
-        description: "If the bot should be automatically restarted"
+        description: "If the bot should forcibly be restarted"
         type: boolean
         default: false
+    outputs:
+      restarted:
+        value: ${{ jobs.deploy.outputs.restarted == 'true' }}
+        description: "If the bot was restarted"
 
 permissions:
   deployments: write
@@ -41,6 +45,8 @@ jobs:
   deploy:
     name: Deploy Bot
     environment: production
+    outputs:
+      restarted: ${{ steps.restart.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
     - name: Checkout files
@@ -108,6 +114,7 @@ jobs:
 
     # restart instances
     - name: Restart Instances
+      id: restart
       if: ${{ always() && (steps.deps_update.conclusion == 'success' || steps.deps_update.outcome == 'skipped') && steps.kill_bot.conclusion == 'success' }}
       run: ssh staging $EXEC_STR
       env:

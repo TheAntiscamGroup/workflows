@@ -56,9 +56,11 @@ jobs:
         id: node_directory
         run: |
           dir=$(dirname $(realpath $(find . -name 'wrangler.toml')))
-          echo "dir=${dir}" >> "$GITHUB_OUTPUT"
-          echo "ver=${dir}/.node-version" >> "$GITHUB_OUTPUT"
-          echo "pack=${dir}/package.json" >> "$GITHUB_OUTPUT"
+          echo "dir=${dir/$WORKSPACE/}" >> "$GITHUB_OUTPUT"
+          echo "ver=${dir/$WORKSPACE/}/.node-version" >> "$GITHUB_OUTPUT"
+          echo "pack=${dir/$WORKSPACE/}/package.json" >> "$GITHUB_OUTPUT"
+        env:
+          WORKSPACE: ${{ github.workspace }}
 
       - name: Install Node
         id: node

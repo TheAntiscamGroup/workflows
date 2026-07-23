@@ -1,0 +1,98 @@
+# Dependabot loves to constantly fail on this one
+# Plus, we usually have to update types
+#
+# So this task handles it.
+name: Update Wrangler Task
+on:
+  workflow_call:
+    inputs:
+      npm_directory:
+        description: "The working directory for npm"
+        type: string
+        value: "./"
+      types_file:
+        description: "The location of the types file to also update, if needed"
+        type: string
+        value: ""
+    outputs:
+      success:
+        value: ${{ jobs.update_wrangler.outputs.committed }}
+        description: "If a commit was made"
+      sha:
+        value: ${{ jobs.update_wrangler.outputs.sha }}
+        description: "The sha value of the commit"
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: wrangler
+  cancel-in-progress: false
+
+jobs:
+  update_wrangler:
+    outputs:
+      committed: ${{ steps.commit.outputs.commit-sha != '' }}
+      sha: ${{ steps.commit.outputs.commit-sha }}
+    runs-on: "ubuntu-latest"
+    name: Update Wrangler
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Update Working directory
+        if: ${{ inputs.npm_directory != './' }}
+        run: cd $DIRECTORY
+        env:
+          DIRECTORY: ${{ inputs.npm_directory }}
+
+      - name: Install Node
+        id: node
+        uses: actions/setup-node@v7
+        with:
+          cache: "npm"
+          node-version-file: ".node-version"
+          package-manager-cache: true
+
+      - name: Update
+        run: "npm update wrangler --save-dev"
+
+      - name: Update types
+        if: ${{ input.types_file != '' }}
+        run: "npm run types"
+
+      - name: Change Back Path
+        if: ${{ inputs.npm_directory != './' }}
+        run: cd ..
+
+      - name: Make Paths File
+        run: |
+          cat >file_list.txt <<EOL
+            |
+              $WORKSPACEpackage.json
+              $WORKSPACEpackage-lock.json
+              $TYPES
+          EOL
+        env:
+          WORKSPACE: ${{ inputs.npm_directory }}
+          TYPES: ${{ inputs.types_file }}
+
+      - name: Build File Paths
+        id: paths
+        run: resp=$(cat file_list.txt) << "$GITHUB_OUTPUT"
+
+      - name: Delete file
+        run: "rm -f file_list.txt"
+
+      - name: Commit Updates
+        id: commit
+        uses: ryancyq/github-signed-commit@cb9b21ee83578fe8e26a9eda530015aedf0c7c5b
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          commit-message: Committing Wrangler Updates
+          files: ${{ steps.paths.outputs.resp }}

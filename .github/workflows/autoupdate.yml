@@ -52,27 +52,35 @@ jobs:
           token: ${{ secrets.READ_REPO_TOKEN }}
           repository: ${{ matrix.repo.full_name }}
 
-      - name: Find Cloudflare Directory
-        id: npm_directory
-        run: cd $(dirname $(realpath $(find . -name 'wrangler.toml')))
+      - name: Find Node Directory
+        id: node_directory
+        run: |
+          dir=$(dirname $(realpath $(find . -name 'wrangler.toml')))
+          echo "dir=${dir}" >> "$GITHUB_OUTPUT"
+          echo "ver=${dir}/.node-version" >> "$GITHUB_OUTPUT"
+          echo "pack=${dir}/package.json" >> "$GITHUB_OUTPUT"
 
       - name: Install Node
         id: node
         uses: actions/setup-node@v7
         with:
           cache: "npm"
-          node-version-file: ".node-version"
+          node-version-file: ${{ steps.node_directory.outputs.ver }}
           package-manager-cache: true
 
       - name: Update
         if: success()
-        run: "npm install wrangler@latest --save-dev"
+        run: |
+          cd $NODE_DIR
+          "npm install wrangler@latest --save-dev"
+        env:
+          NODE_DIR: ${{ steps.node_directory.outputs.dir }}
 
       - name: Read packages.json
         id: package_read
         uses: socksthewolf/github-action-json@v1.0.3
         with:
-          path: "package.json"
+          path: ${{ steps.node_directory.outputs.pack }}
 
       - name: Check for types
         id: type_check
@@ -89,14 +97,11 @@ jobs:
 
       - name: Build types
         if: ${{ success() && steps.type_check.outputs.has_data == 'true' }}
-        run: "npm run types"
-
-      - name: Go back to root
         run: |
-          echo $WORKSPACE
-          cd $WORKSPACE
+          cd $NODE_DIR
+          "npm run types"
         env:
-          WORKSPACE: ${{ github.workspace }}
+          NODE_DIR: ${{ steps.node_directory.outputs.dir }}
 
         # Set up the GPG Key for Signing Commits
       - name: Setup GPG Key

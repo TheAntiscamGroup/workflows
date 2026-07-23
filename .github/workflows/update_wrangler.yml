@@ -2,6 +2,9 @@
 # Plus, we usually have to update types
 #
 # So this task handles it by opening a PR
+#
+# Requires that GH Actions can open PRs.
+# Could probably be solved with an app integration
 name: Update Wrangler Task
 on:
   workflow_call:
@@ -60,10 +63,11 @@ jobs:
           package-manager-cache: true
 
       - name: Update
-        run: "npm update wrangler --save-dev"
+        if: success()
+        run: "npm install wrangler@latest --save-dev"
 
       - name: Update types
-        if: ${{ inputs.update_types == true }}
+        if: ${{ success() && inputs.update_types == true }}
         run: "npm run types"
 
       - name: Change Back Path

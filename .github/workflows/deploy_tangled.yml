@@ -19,6 +19,7 @@ jobs:
 
   push_tangled:
     name: Update Tangled Mirror
+    needs: clean_deployments
     runs-on: ubuntu-latest
     environment: tangled
     steps:

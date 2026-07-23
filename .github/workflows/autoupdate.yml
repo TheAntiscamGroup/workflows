@@ -1,4 +1,4 @@
-name: Push Wrangler Updates
+name: Auto Push Wrangler Updates
 on:
   workflow_dispatch:
 
@@ -20,7 +20,7 @@ jobs:
     steps:
       - name: Query Repositories
         id: get-repos
-        uses: raven-actions/get-repos@258118113f2749182a50a86e995f1371fbdc7498
+        uses: raven-actions/get-repos@main
         with:
           owner: ${{ github.repository_owner }}
           topics: "wrangler,test"

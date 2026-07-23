@@ -19,6 +19,9 @@ on:
       merge_type:
         value: ${{ jobs.sync.outputs.merge_type }}
         description: "Merge operation that was performed"
+      success:
+        value: ${{ jobs.sync.result == 'success'}}
+        description: "If the sync operation completed successfully"
 
   # I don't know why, but it appears that this cron is never running
   # And it's completely mysterious.
@@ -59,11 +62,15 @@ jobs:
         # branch besides the default one (which is main across all projects)
         run: |
           response=$(gh api --method POST -H 'Accept: application/vnd.github+json' -H "X-GitHub-Api-Version: $API_VERSION" /repos/$REPO/merge-upstream -f 'branch=main')
+          ret_code=$?
           readonly response
-          echo $response
-          echo "Setting Variables..."
-          result=$(echo $response | jq -r .message) >> "$GITHUB_OUTPUT"
+          readonly ret_code
+          message=$(echo $response | jq -r .message) >> "$GITHUB_OUTPUT"
           merge_type=$(echo $response | jq -r .merge_type) >> "$GITHUB_OUTPUT"
+          echo "Result: $message"
+          echo "Used Merge: $merge_type"
+          echo "Exiting with code $ret_code"
+          exit $ret_code
         env:
           # Swaps
           REPO: ${{ github.repository }}

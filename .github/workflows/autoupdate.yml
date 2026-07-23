@@ -31,8 +31,8 @@ jobs:
         with:
           owner: ${{ github.repository_owner }}
           github-token: ${{ secrets.READ_REPO_TOKEN }}
-          topics: "wrangler,test"
-          operator: "AND"
+          topics: "wrangler,cloudflare"
+          operator: "OR"
 
   sync-repos:
     name: Dispatch Event (${{ matrix.repo.name }})

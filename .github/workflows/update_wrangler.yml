@@ -62,7 +62,7 @@ jobs:
         run: "npm update wrangler --save-dev"
 
       - name: Update types
-        if: ${{ input.types_file != '' }}
+        if: ${{ inputs.types_file != '' }}
         run: "npm run types"
 
       - name: Change Back Path

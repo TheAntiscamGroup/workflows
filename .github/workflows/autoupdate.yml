@@ -85,7 +85,7 @@ jobs:
       - name: Update
         if: success()
         run: |
-          if [[ "$NODE_DIR" != "" ]]; then
+          if [ -z "$NODE_DIR" ]; then
             cd $NODE_DIR
           fi
           "npm install wrangler@latest --save-dev"
@@ -114,7 +114,7 @@ jobs:
       - name: Build types
         if: ${{ success() && steps.type_check.outputs.has_data == 'true' }}
         run: |
-          if [[ "$NODE_DIR" != "" ]]; then
+          if [ -z "$NODE_DIR" ]; then
             cd $NODE_DIR
           fi
           "npm run types"

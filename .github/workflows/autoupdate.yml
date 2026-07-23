@@ -11,7 +11,13 @@ concurrency:
   cancel-in-progress: false
   queue: single
 
+permissions:
+  actions: write
+
 jobs:
+  clean_actions:
+    uses: ./.github/workflows/clean_actions.yml
+
   get-repos:
     name: Get All Repos
     runs-on: ubuntu-latest
@@ -74,8 +80,21 @@ jobs:
         with:
           path: "package.json"
 
-      - name: Update types
-        if: ${{ success() && contains(fromJson(steps.package_read.outputs.scripts), 'types') }}
+      - name: Check for types
+        id: type_check
+        if: ${{ steps.package_read.outputs.scripts }}
+        run: |
+          check_field=$(echo "$JSON_DATA" | jq -r .types)
+          if [[ "$check_field" != null ]]; then
+            echo "has_data=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_data=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          JSON_DATA: ${{ steps.package_read.outputs.scripts }}
+
+      - name: Build types
+        if: ${{ success() && steps.type_check.outputs.has_data == 'true' }}
         run: "npm run types"
 
       - name: Change Back Path

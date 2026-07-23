@@ -9,11 +9,11 @@ on:
       npm_directory:
         description: "The working directory for npm"
         type: string
-        value: "./"
+        default: "./"
       types_file:
         description: "The location of the types file to also update, if needed"
         type: string
-        value: ""
+        default: ""
     outputs:
       success:
         value: ${{ jobs.update_wrangler.outputs.committed }}

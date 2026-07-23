@@ -37,10 +37,10 @@ on:
         description: "A Cloudflare API Token with Domain API Gateway Edit Support"
     outputs:
       has_spec:
-        value: ${{ jobs.build_spec.outputs.has_spec == 'true' }}
+        value: ${{ jobs.build_spec.outputs.has_spec }}
         description: "If the OpenAPI spec was successfully found"
       uploaded:
-        value: ${{ jobs.build_spec.outputs.uploaded_spec == 'true' }}
+        value: ${{ jobs.build_spec.outputs.uploaded_spec }}
         description: "If the OpenAPI spec was successfully uploaded to API Shield"
 
 permissions:
@@ -68,7 +68,7 @@ jobs:
     name: Generate & Upload Spec
     runs-on: ubuntu-latest
     outputs:
-      has_spec: ${{ steps.spec_check.outputs.has_file == 'true' }}
+      has_spec: ${{ steps.spec_check.conclusion == 'success' }}
       uploaded_spec: ${{ steps.upload.conclusion == 'success' }}
     environment: openapi
     steps:
@@ -82,13 +82,13 @@ jobs:
 
         # Checkout all files
       - name: Checkout Repository
-        if: ${{ inputs.is_download != 'true' }}
+        if: ${{ inputs.is_download != true }}
         uses: actions/checkout@v7
 
         # Build sitemap with node
       - name: Setup Node
         id: node
-        if: ${{ inputs.needs_node == 'true' }}
+        if: ${{ inputs.needs_node == true }}
         uses: actions/setup-node@v7
         with:
           cache: "npm"
@@ -96,15 +96,15 @@ jobs:
           package-manager-cache: true
 
       - name: Install and Build Spec
-        if: ${{ inputs.needs_node == 'true' && steps.node.conclusion == 'success' }}
+        if: ${{ inputs.needs_node == true && steps.node.conclusion == 'success' }}
         run: npm install && npm run openapi
 
         # Download Existing OpenAPI spec if provided
       - name: If Download but Missing Download URI
-        if: ${{ inputs.is_download == 'true' && inputs.download_uri == '' }}
+        if: ${{ inputs.is_download == true && inputs.download_uri == '' }}
         run: exit 1
       - name: Download OpenAPI Spec
-        if: ${{ inputs.is_download == 'true' && inputs.download_uri != '' }}
+        if: ${{ inputs.is_download == true && inputs.download_uri != '' }}
         run: curl --no-progress-meter --output openapi.json "$DOWNLOAD_URL"
         env:
           DOWNLOAD_URL: ${{ inputs.download_uri }}
@@ -115,16 +115,16 @@ jobs:
         run: |
           echo "Check for openapi.json file"
           if test -f "openapi.json"; then
-            echo "has_file=true" >> $GITHUB_OUTPUT
             echo "File Exists"
+            exit 0
           else
-            echo "has_file=false" >> $GITHUB_OUTPUT
             echo "File Missing!"
+            exit 1
           fi
 
         # If we have the file, upload it to CF API Shield
       - name: Upload Spec to API Shield
-        if: ${{ steps.spec_check.outputs.has_file == 'true' }}
+        if: success()
         id: upload
         uses: socksthewolf/cloudflare-upload-spec@4aa5efd32ce6fc898dcb794ccd7e3001568cce10
         with:
@@ -134,7 +134,7 @@ jobs:
 
         # Additionally, save it to our GH artifacts
       - name: Upload Spec as Artifact
-        if: ${{ success() && steps.spec_check.outputs.has_file == 'true' }}
+        if: success()
         uses: actions/upload-artifact@v7
         with:
           name: openapi-spec-${{ inputs.ref }}

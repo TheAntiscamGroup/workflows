@@ -84,7 +84,7 @@ jobs:
         run: npm install && npm run openapi
 
         # Download Existing OpenAPI spec if provided
-      - name: Fail if download but no Download URI
+      - name: If Download but Missing Download URI
         if: ${{ inputs.is_download && inputs.download_uri == '' }}
         run: exit 1
       - name: Download OpenAPI Spec
@@ -94,7 +94,7 @@ jobs:
           DOWNLOAD_URL: ${{ inputs.download_uri }}
 
         # Check to see that we have the openapi file at all
-      - name: Check for Spec Existing
+      - name: Check If File Exists
         id: spec_check
         run: |
           if test -f "openapi.json"; then

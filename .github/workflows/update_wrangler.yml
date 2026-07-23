@@ -81,9 +81,13 @@ jobs:
           WORKSPACE: ${{ inputs.npm_directory }}
           TYPES: ${{ inputs.types_file }}
 
+      - name: Check Files Output
+        run: cat file_list.txt
+
       - name: Build File Paths
         id: paths
-        run: resp=$(cat file_list.txt) << "$GITHUB_OUTPUT"
+        if: success()
+        run: resp=$(cat file_list.txt) >> "$GITHUB_OUTPUT"
 
       - name: Delete file
         run: "rm -f file_list.txt"
@@ -95,4 +99,5 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           commit-message: Committing Wrangler Updates
+          tag-only-if-file-changes: false
           files: ${{ steps.paths.outputs.resp }}

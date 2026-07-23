@@ -73,7 +73,7 @@ jobs:
           path: "package.json"
 
       - name: Update types
-        if: ${{ success() && contains(fromJson(steps.package_read.outputs.scripts), "types") }}
+        if: ${{ success() && contains(fromJson(steps.package_read.outputs.scripts), 'types') }}
         run: "npm run types"
 
       - name: Change Back Path

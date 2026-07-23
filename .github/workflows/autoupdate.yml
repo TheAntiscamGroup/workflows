@@ -58,6 +58,7 @@ jobs:
           dir=$(dirname $(realpath $(find . -name 'wrangler.toml')))
           echo "dir=${dir/$WORKSPACE/}" >> "$GITHUB_OUTPUT"
           echo "ver=${dir/$WORKSPACE/}/.node-version" >> "$GITHUB_OUTPUT"
+          echo "lock=${dir/$WORKSPACE/}/package-lock.json" >> "$GITHUB_OUTPUT"
           echo "pack=${dir/$WORKSPACE/}/package.json" >> "$GITHUB_OUTPUT"
         env:
           WORKSPACE: ${{ github.workspace }}
@@ -67,13 +68,16 @@ jobs:
         uses: actions/setup-node@v7
         with:
           cache: "npm"
+          cache-dependency-path: ${{ steps.node_directory.outputs.lock }}
           node-version-file: ${{ steps.node_directory.outputs.ver }}
           package-manager-cache: true
 
       - name: Update
         if: success()
         run: |
-          cd $NODE_DIR
+          if [[ "$NODE_DIR" != "" ]]; then
+            cd $NODE_DIR
+          fi
           "npm install wrangler@latest --save-dev"
         env:
           NODE_DIR: ${{ steps.node_directory.outputs.dir }}
@@ -100,7 +104,9 @@ jobs:
       - name: Build types
         if: ${{ success() && steps.type_check.outputs.has_data == 'true' }}
         run: |
-          cd $NODE_DIR
+          if [[ "$NODE_DIR" != "" ]]; then
+            cd $NODE_DIR
+          fi
           "npm run types"
         env:
           NODE_DIR: ${{ steps.node_directory.outputs.dir }}

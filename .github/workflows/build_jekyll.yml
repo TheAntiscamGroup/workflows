@@ -37,6 +37,10 @@ on:
         description: "The Ruby cache storage number"
         type: number
         default: 1
+      remove_feeds:
+        description: "If jekyll feeds should be removed automatically"
+        type: boolean
+        default: true
       needs_after_run:
         description: "If we should execute a shell script after running the build"
         type: boolean
@@ -147,6 +151,7 @@ jobs:
       - name: No Source Maps
         run: rm -rf _site/assets/**/*.map
       - name: Remove All Feeds
+        if: ${{ inputs.remove_feeds == true }}
         run: rm -f _site/feed.xml
 
         # Convert jekyll redirects into CF redirects
